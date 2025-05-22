@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRENCHES UPDATES</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #e5e5e5;
+            --border-color: #333333;
+            --secondary-text: #777777;
+            --input-bg: #111111;
+            --hover-color: #ffffff;
+            --radar-color: rgba(20, 255, 20, 0.15);
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Radar effect */
+        .radar {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vmax;
+            height: 100vmax;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.03;
+        }
+        
+        .radar-sweep {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(
+                transparent 0deg,
+                var(--radar-color) 60deg,
+                transparent 120deg
+            );
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+            mix-blend-mode: screen;
+        }
+        
+        .radar-circle {
+            position: absolute;
+            border: 1px solid var(--radar-color);
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+        }
+        
+        .radar-circle:nth-child(1) { width: 20%; height: 20%; }
+        .radar-circle:nth-child(2) { width: 40%; height: 40%; }
+        .radar-circle:nth-child(3) { width: 60%; height: 60%; }
+        .radar-circle:nth-child(4) { width: 80%; height: 80%; }
+        .radar-circle:nth-child(5) { width: 100%; height: 100%; }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .logo {
+            width: 80px;
+            height:  80px;
+            margin-left: 1rem;
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+
+        }
+        
+        .header-content {
+            flex: 1;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 0.7rem;
+            color: var(--secondary-text);
+            margin-top: 0.25rem;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+        
+        .header-links a {
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        
+        .header-links a:hover {
+            color: var(--hover-color);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .update-form {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        
+        .name-input {
+            grid-column: span 3;
+        }
+        
+        .text-input {
+            grid-column: span 7;
+        }
+        
+        .submit-btn {
+            grid-column: span 2;
+        }
+        
+        input {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 0.75rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.7rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--secondary-text);
+        }
+        
+        button {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem;
+            font-family: inherit;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            background-color: #222222;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .update {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .update-header {
+            font-size: 0.7rem;
+            color: var(--secondary-text);
+            margin-bottom: 0.25rem;
+        }
+        
+        .update-content {
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            .update-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .name-input, .text-input, .submit-btn {
+                grid-column: span 1;
+            }
+            
+            header {
+                flex-direction: column;
+            }
+            
+            .logo {
+                margin-left: 0;
+                margin-bottom: 1rem;
+                align-self: flex-end;
+            }
+            
+            .radar {
+                opacity: 0.02;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Radar Effect -->
+    <div class="radar">
+        <div class="radar-sweep"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <div class="header-container">
+                <div>
+                    <h1>TRENCHES UPDATES</h1>
+                    <div class="subtitle">Real-time Feed intelligence</div>
+                </div>
+                <div class="header-links">
+                    <a href="https://twitter.com/trenchupdates_" target="_blank">Twitter</a>
+                    <span>|</span>
+                    <span>CA HERE</span>
+                </div>
+            </div>
+        </div>
+        <div class="logo">
+            <!-- Replace with your actual logo path -->
+            <img src="image.png" alt="Trenches Updates Logo">
+        </div>
+    </header>
+
+    <form class="update-form" id="updateForm">
+        <div class="name-input">
+            <input type="text" id="nameInput" placeholder="NAME" maxlength="32" required>
+        </div>
+        <div class="text-input">
+            <input type="text" id="textInput" placeholder="MESSAGE" maxlength="140" required>
+        </div>
+        <div class="submit-btn">
+            <button type="submit" id="submitBtn">POST</button>
+        </div>
+    </form>
+
+    <div id="updatesContainer"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDoNaqf-JmcX8mVK_0efd1dzMmYY04SIdM",
+            authDomain: "degen-hunger.firebaseapp.com",
+            projectId: "degen-hunger",
+            storageBucket: "degen-hunger.appspot.com",
+            messagingSenderId: "133251693123",
+            appId: "1:133251693123:web:568deb489f4e49c5cef2f6",
+            measurementId: "G-FBXSKZRC5Q"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+
+        // DOM elements
+        const updateForm = document.getElementById('updateForm');
+        const nameInput = document.getElementById('nameInput');
+        const textInput = document.getElementById('textInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const updatesContainer = document.getElementById('updatesContainer');
+
+        // Format date to YYYY/MM/DD HH:MM:SS
+        function formatDate(date) {
+            const d = date.toDate();
+            return [
+                d.getFullYear(),
+                String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0')
+            ].join('/') + ' ' + [
+                String(d.getHours()).padStart(2, '0'),
+                String(d.getMinutes()).padStart(2, '0'),
+                String(d.getSeconds()).padStart(2, '0')
+            ].join(':');
+        }
+
+        // Render updates to the DOM
+        function renderUpdates(updates) {
+            updatesContainer.innerHTML = '';
+            
+            updates.forEach(update => {
+                const updateElement = document.createElement('div');
+                updateElement.className = 'update';
+                
+                const headerElement = document.createElement('div');
+                headerElement.className = 'update-header';
+                headerElement.textContent = `${formatDate(update.timestamp)} / ${update.name}`;
+                
+                const contentElement = document.createElement('div');
+                contentElement.className = 'update-content';
+                contentElement.textContent = update.text;
+                
+                updateElement.appendChild(headerElement);
+                updateElement.appendChild(contentElement);
+                updatesContainer.appendChild(updateElement);
+            });
+        }
+
+        // Load updates from Firestore
+        function loadUpdates() {
+            const q = firebase.firestore()
+                .collection('updates')
+                .orderBy('timestamp', 'desc');
+            
+            q.onSnapshot((querySnapshot) => {
+                const updates = [];
+                querySnapshot.forEach((doc) => {
+                    updates.push(doc.data());
+                });
+                renderUpdates(updates);
+            });
+        }
+
+        // Handle form submission
+        updateForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = nameInput.value.trim();
+            const text = textInput.value.trim();
+            
+            if (!name || !text) return;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '...';
+            
+            try {
+                await db.collection('updates').add({
+                    name: name,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                nameInput.value = '';
+                textInput.value = '';
+            } catch (error) {
+                console.error('Error adding update: ', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'POST';
+            }
+        });
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUpdates();
+        });
+    </script>
+</body>
+</html>
